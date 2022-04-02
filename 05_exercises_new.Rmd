@@ -1,6 +1,6 @@
 ---
 title: 'Weekly Exercises #5'
-author: "Your name here"
+author: "Cynthia Zhang"
 output: 
   html_document:
     keep_md: TRUE
@@ -83,10 +83,50 @@ Once your repository is created, you should always open your **project** rather 
 
   1. Choose 2 graphs you have created for ANY assignment in this class and add interactivity using the `ggplotly()` function.
   
+```{r}
+garden_ly <- garden_harvest %>%
+  mutate(weight_pound = weight * 0.00220462) %>%
+  filter(vegetable %in% c("tomatoes")) %>%
+  group_by(variety) %>%
+  summarize(weight_tot = sum(weight_pound), first_harvest = min(date)) %>%
+  arrange(first_harvest) %>%
+  ggplot(aes(x = weight_tot, fct_reorder(variety, first_harvest))) +
+  geom_col() +
+  labs(x = "Weight(pounds)",
+       y = "Varieties of Tomoato",
+       title = "Total Harvested Weight of Different Varieties of Tomato")
 
-  
+ggplotly(garden_ly)
+```
+
   2. Use animation to tell an interesting story with the `small_trains` dataset that contains data from the SNCF (National Society of French Railways). These are Tidy Tuesday data! Read more about it [here](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-02-26).
 
+```{r}
+late_departure <- small_trains %>%
+  select(departure_station, journey_time_avg, total_num_trips, num_late_at_departure) %>%
+  group_by(departure_station, journey_time_avg) %>%
+  summarize(prop_late_departure = num_late_at_departure / total_num_trips) %>%
+  ggplot(aes(x = journey_time_avg, y = prop_late_departure, group = departure_station)) +
+  geom_jitter() +
+  labs(title = "Association between journey time and proportion of departuring late",
+       subtitle = "Departure Station: {closest_state}",
+       x = "Time of Journey",
+       y = "Proportion of Departing Late") +
+  transition_states(departure_station, 
+                    transition_length = 2, 
+                    state_length = 1) +
+  exit_shrink() +
+  enter_recolor(color = "lightblue") +
+  exit_recolor(color = "lightblue")
+
+animate(late_departure, duration = 20, nframes = 400)
+
+anim_save("cycling.gif")
+
+knitr::include_graphics("cycling.gif")
+```
+
+> I create this animation to investigate the relationship between the total time of journey and the likelihood of departing late. From the animation, we can observe that for each station, most of the dots are scatter at the bottom of the graph which means most of the journeies have pretty low proportion of being late. But as the time of journey getting longer, some stations show a trend of more likely departing late which is shown as some dots reach to the top of the graph. Also, different stations have different performance. For some stations, their dots are mostly scattered at the bottom of the graph so that the trains departing from those stations are unlikely being late. But for some stations, their dots are mostly scatter at the top of the graph so that the trains departing from those stations are more likely being late.
 
 ## Garden data
 
@@ -100,11 +140,26 @@ Once your repository is created, you should always open your **project** rather 
 garden_harvest %>% 
   filter(vegetable == "tomatoes") %>% 
   group_by(date, variety) %>% 
-  summarize(daily_harvest_lb = sum(weight)*0.00220462) %>% 
+  summarize(daily_harvest_lb = sum(weight)*0.00220462) %>%
   ungroup() %>% 
   complete(variety, 
            date, 
-           fill = list(daily_harvest_lb = 0))
+           fill = list(daily_harvest_lb = 0)) %>%
+  group_by(variety) %>%
+  mutate(cum_weight = cumsum(daily_harvest_lb)) %>%
+  ggplot(aes(x = date, y = cum_weight, fill = fct_reorder(variety, desc(daily_harvest_lb), sum))) +
+  geom_area() +
+  labs(title = "Cumulative harvest (lb)", 
+       subtitle = "Date: {frame_along}",
+       x = "",
+       y = "",
+       color = "variety") +
+  theme(legend.position = "none") +
+  transition_reveal(date)
+
+anim_save("tomato_harvest.gif")
+
+knitr::include_graphics("tomato_harvest.gif")
   
 ```
 
@@ -120,11 +175,66 @@ garden_harvest %>%
   * Show the time in the subtitle.  
   * CHALLENGE: use the `ggimage` package and `geom_image` to add a bike image instead of a red point. You can use [this](https://raw.githubusercontent.com/llendway/animation_and_interactivity/master/bike.png) image. See [here](https://goodekat.github.io/presentations/2019-isugg-gganimate-spooky/slides.html#35) for an example. 
   * Add something of your own! And comment on if you prefer this to the static map and why or why not.
+
+```{r}
+mallorca_map <- get_stamenmap(
+    bbox = c(left = 1.9514, bottom = 39.0971, right = 4.105 , top = 40.0981), 
+    maptype = "terrain",
+    zoom = 10
+)
+ggmap(mallorca_map) +
+  geom_point(data = mallorca_bike_day7, 
+            aes(x = lon, y = lat),
+            color = "red",
+            size = 2) +
+  geom_path(data = mallorca_bike_day7, 
+            aes(x = lon, y = lat, color = ele),
+            size = 2) +
+  theme_map() +
+  labs(title = "Cycling Track", 
+       subtitle = "time: {frame_along}",
+       x = "",
+       y = "") +
+  transition_reveal(time)
+
+anim_save("covid_case.gif")
+
+knitr::include_graphics("covid_case.gif")    
+```
+
+> I prefer the animation. Because from the animation, I can clearly and easily track the path of cycling as time pass. Compared to the static map, I can observe where the cycling starts and where it ends from the animation.
   
   5. In this exercise, you get to meet Lisa's sister, Heather! She is a proud Mac grad, currently works as a Data Scientist where she uses R everyday, and for a few years (while still holding a full-time job) she was a pro triathlete. You are going to map one of her races. The data from each discipline of the Ironman 70.3 Pan Am championships, Panama is in a separate file - `panama_swim`, `panama_bike`, and `panama_run`. Create a similar map to the one you created with my cycling data. You will need to make some small changes: 1. combine the files putting them in swim, bike, run order (HINT: `bind_rows()`), 2. make the leading dot a different color depending on the event (for an extra challenge, make it a different image using `geom_image()!), 3. CHALLENGE (optional): color by speed, which you will need to compute on your own from the data. You can read Heather's race report [here](https://heatherlendway.com/2016/02/10/ironman-70-3-pan-american-championships-panama-race-report/). She is also in the Macalester Athletics [Hall of Fame](https://athletics.macalester.edu/honors/hall-of-fame/heather-lendway/184) and still has records at the pool. 
   
 ```{r}
+panama_ironman <- bind_rows(panama_swim, panama_bike, panama_run) %>%
+  select(event, lon, lat, time) %>%
+  group_by(event)
 
+
+panama_map <- get_stamenmap(
+    bbox = c(left = -79.6392, bottom = 8.8891, right = -79.4521 , top = 8.9914), 
+    maptype = "terrain",
+    zoom = 13
+)
+
+ggmap(panama_map) +
+  geom_point(data = panama_ironman, 
+            aes(x = lon, y = lat, color = event),
+            size = 2) +
+  geom_path(data = panama_ironman, 
+            aes(x = lon, y = lat, color = event),
+            size = 1) +
+  theme_map() +
+  labs(title = "Panama Ironman Track", 
+       subtitle = "time: {frame_along}",
+       x = "",
+       y = "") +
+  transition_reveal(time)
+
+anim_save("ironman.gif")
+
+knitr::include_graphics("ironman.gif")
 ```
   
 ## COVID-19 data
@@ -144,14 +254,58 @@ census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_ce
   mutate(state = str_to_lower(state))
 
 states_map <- map_data("state")
+
+covid_now <- covid19 %>%
+  arrange(desc(date)) %>%
+  group_by(state) %>%
+  mutate(rownumber = 1:n()) %>%
+  mutate(state = str_to_lower(`state`))
+
+covid_pop <- covid_now %>%
+  left_join(census_pop_est_2018,
+            by = c("state" = "state")) %>%
+  mutate(cases_10000 = (cases/est_pop_2018)*10000)
+
+covid_pop %>%
+  filter(day(date) == 15) %>%
+  ggplot() +
+  geom_map(map = states_map,
+           aes(map_id = state,
+               fill = cases_10000,
+               group = date)) +
+  expand_limits(x = states_map$long, y = states_map$lat) +
+  labs(title = "COVID cases per 10000 people",
+       subtitle = "Date: {closest_state}") +
+  scale_fill_viridis_c(option = "magma", direction = -1) +
+  theme_map() +
+  transition_states(date)
+
+anim_save("covid_case.gif")
+
+knitr::include_graphics("covid_case.gif")
 ```
+
+> From the animation, I can observe that covid cases first appears in the west coast then all the states report cases and keep increasing. The number of cases grows faster in the states in the middle and states in the southeast coast. Till now, states up north and states in the southeast also have the most amount of covid cases. 
 
 ## Your first `shiny` app (for next week!)
 
   7. This app will also use the COVID data. Make sure you load that data and all the libraries you need in the `app.R` file you create. You should create a new project for the app, separate from the homework project. Below, you will post a link to the app that you publish on shinyapps.io. You will create an app to compare states' daily number of COVID cases per 100,000 over time. The x-axis will be date. You will have an input box where the user can choose which states to compare (`selectInput()`), a slider where the user can choose the date range, and a submit button to click once the user has chosen all states they're interested in comparing. The graph should display a different line for each state, with labels either on the graph or in a legend. Color can be used if needed. 
+ 
+```{r}
+covid_daily_100000 <- covid19 %>%
+  mutate(state = str_to_lower(`state`)) %>%
+      left_join(census_pop_est_2018,
+                by = c("state" = "state")) %>%
+  group_by(state) %>%
+  filter(est_pop_2018 != "NA") %>%
+  mutate(cases_100000 = (cases/est_pop_2018)*100000)
+```
+
   
 Put the link to your app here: 
-  
+
+https://zhangcynthia.shinyapps.io/covidcases/.
+
 ## GitHub link
 
   8. Below, provide a link to your GitHub repo with this set of Weekly Exercises. 
