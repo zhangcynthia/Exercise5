@@ -12,7 +12,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-#knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
 ```
 
 ```{r libraries}
@@ -121,9 +121,7 @@ late_departure <- small_trains %>%
 
 animate(late_departure, duration = 20, nframes = 400)
 
-anim_save("cycling.gif")
-
-knitr::include_graphics("cycling.gif")
+anim_save("train.gif")
 ```
 
 > I create this animation to investigate the relationship between the total time of journey and the likelihood of departing late. From the animation, we can observe that for each station, most of the dots are scatter at the bottom of the graph which means most of the journeies have pretty low proportion of being late. But as the time of journey getting longer, some stations show a trend of more likely departing late which is shown as some dots reach to the top of the graph. Also, different stations have different performance. For some stations, their dots are mostly scattered at the bottom of the graph so that the trains departing from those stations are unlikely being late. But for some stations, their dots are mostly scatter at the top of the graph so that the trains departing from those stations are more likely being late.
@@ -158,8 +156,6 @@ garden_harvest %>%
   transition_reveal(date)
 
 anim_save("tomato_harvest.gif")
-
-knitr::include_graphics("tomato_harvest.gif")
   
 ```
 
@@ -197,9 +193,8 @@ ggmap(mallorca_map) +
        y = "") +
   transition_reveal(time)
 
-anim_save("covid_case.gif")
-
-knitr::include_graphics("covid_case.gif")    
+anim_save("cycling.gif")
+    
 ```
 
 > I prefer the animation. Because from the animation, I can clearly and easily track the path of cycling as time pass. Compared to the static map, I can observe where the cycling starts and where it ends from the animation.
@@ -233,8 +228,6 @@ ggmap(panama_map) +
   transition_reveal(time)
 
 anim_save("ironman.gif")
-
-knitr::include_graphics("ironman.gif")
 ```
   
 ## COVID-19 data
@@ -281,8 +274,6 @@ covid_pop %>%
   transition_states(date)
 
 anim_save("covid_case.gif")
-
-knitr::include_graphics("covid_case.gif")
 ```
 
 > From the animation, I can observe that covid cases first appears in the west coast then all the states report cases and keep increasing. The number of cases grows faster in the states in the middle and states in the southeast coast. Till now, states up north and states in the southeast also have the most amount of covid cases. 
@@ -309,6 +300,7 @@ https://zhangcynthia.shinyapps.io/covidcases/.
 ## GitHub link
 
   8. Below, provide a link to your GitHub repo with this set of Weekly Exercises. 
-
+  
+https://github.com/zhangcynthia/Exercise5
 
 **DID YOU REMEMBER TO UNCOMMENT THE OPTIONS AT THE TOP?**
